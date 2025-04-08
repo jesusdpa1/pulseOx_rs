@@ -1,0 +1,22 @@
+[project]
+name = "pulseox-rs"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Jesús Peñaloza", email = "jesus.penalozaa@ufl.edu" }
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+pulseox-rs = "pulseox_rs:main"
+
+[tool.maturin]
+module-name = "pulseox_rs._core"
+python-packages = ["pulseox_rs"]
+python-source = "src"
+
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
