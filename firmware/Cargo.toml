@@ -1,0 +1,32 @@
+# Cargo.toml
+[package]
+name = "arduino-max30105"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# AVR HAL library for Arduino
+arduino-hal = "0.1.0"
+
+# Embedded HAL traits
+embedded-hal = "0.2.7"
+
+# MAX30105 Rust library (if available)
+# max3010x = "0.1.0"  # Uncomment and use appropriate version
+
+# For I2C communication
+embedded-hal-driver-i2c = "0.1.0"
+
+# Optional: Fixed-point math library for embedded systems
+fixed = "1.15.0"
+
+# Panic handling for embedded systems
+panic-halt = "0.2.0"
+
+[profile.dev]
+panic = "halt"
+
+[profile.release]
+panic = "halt"
+lto = true
+opt-level = "s"
