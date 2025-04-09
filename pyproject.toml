@@ -9,6 +9,13 @@ authors = [
 requires-python = ">=3.12"
 dependencies = []
 
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29.5",
+    "ruff>=0.9.5",
+]
+
+
 [project.scripts]
 pulseox-rs = "pulseox_rs:main"
 
@@ -16,7 +23,11 @@ pulseox-rs = "pulseox_rs:main"
 module-name = "pulseox_rs._core"
 python-packages = ["pulseox_rs"]
 python-source = "src"
+manifest-path = "./rust/Cargo.toml"
 
 [build-system]
 requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
+
+[tool.uv]
+cache-keys = [{file = "pyproject.toml"}, {file = "./rust/Cargo.toml"}, {file = "**/*.rs"}]
