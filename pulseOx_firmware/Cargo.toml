@@ -1,25 +1,24 @@
 [package]
-name = "pulse-ox-firmware"
+name = "pulseox-firmware"
 version = "0.1.0"
 authors = ["jpenalozaa"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [[bin]]
-name = "pulse-ox-firmware"
+name = "pulseox-firmware"
 test = false
 bench = false
 
 [dependencies]
-panic-halt = "0.2.0"
-ufmt = "0.2.0"
+embedded-hal = "1.0.0"
+max3010x = "0.2.0"
 nb = "1.1.0"
-embedded-hal = "1.0"
-max3010x = "0.4.0"  # Add this line
+panic-halt = "1.0.0"
+ufmt = "0.2.0"
 
 [dependencies.arduino-hal]
 git = "https://github.com/rahix/avr-hal"
-rev = "fafaf587a32a4500239fd073f89d1b9c36b48092"
 features = ["arduino-uno"]
 
 # Configure the build for minimal size - AVRs have very little program memory
