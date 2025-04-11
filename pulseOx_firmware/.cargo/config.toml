@@ -1,9 +1,9 @@
 [build]
-target = "avr-none"
-rustflags = ["-C", "target-cpu=atmega328p"]
+target = "thumbv7em-none-eabihf"
 
-[target.'cfg(target_arch = "avr")']
-runner = "ravedude uno -cb 57600"
+[target.'cfg(all(target_arch = "arm", target_os = "none"))']
+runner = "probe-run --chip RA4M1"
 
 [unstable]
 build-std = ["core"]
+build-std-features = ["panic_immediate_abort"]

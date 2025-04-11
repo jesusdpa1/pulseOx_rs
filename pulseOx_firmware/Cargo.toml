@@ -11,10 +11,14 @@ test = false
 bench = false
 
 [dependencies]
+cortex-m = "0.7.7"
+cortex-m-rt = "0.7.5"
 embedded-hal = "1.0.0"
 max3010x = "0.2.0"
 nb = "1.1.0"
 panic-halt = "1.0.0"
+rand_chacha = "0.9.0"
+rand_core = "0.9.3"
 ufmt = "0.2.0"
 
 [dependencies.arduino-hal]
