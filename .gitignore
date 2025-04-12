@@ -3,7 +3,7 @@
 poetry.lock
 Cargo.lock
 *uv.lock
-
+target/*
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
