@@ -25,9 +25,9 @@ float breathingFilterState[4] = {0};
 float heartRateFilterState[4] = {0};
 
 // Filter parameter variables
-float breathingLowCutoff = 0.11f;      // Default low cutoff for breathing (Hz)
+float breathingLowCutoff = 0.1f;      // Default low cutoff for breathing (Hz)
 float breathingHighCutoff = 0.5f;     // Default high cutoff for breathing (Hz)
-float heartRateLowCutoff = 0.2f;      // Default low cutoff for heart rate (Hz)
+float heartRateLowCutoff = 0.5f;      // Default low cutoff for heart rate (Hz)
 float heartRateHighCutoff = 5.0f;     // Default high cutoff for heart rate (Hz)
 
 // Sample rate value (to be set in setup)
@@ -54,7 +54,7 @@ void setup() {
 
   // Configure sensor with specific settings
   config.sensorMode = MODE_SPO2;       // Use SpO2 mode (RED + IR LEDs)
-  config.sampleRate = SAMPLERATE_400;  // 800 samples per second
+  config.sampleRate = SAMPLERATE_800;  // 800 samples per second
   config.pulseWidth = PULSEWIDTH_69;   // 69μs pulse width
   config.adcRange = ADCRANGE_16384;    // Full range
   config.sampleAvg = SAMPLEAVG_4;      // Average 4 samples
@@ -91,7 +91,7 @@ void setup() {
     case SAMPLERATE_1000: actualSampleRate = 1000.0f; break;
     case SAMPLERATE_1600: actualSampleRate = 1600.0f; break;
     case SAMPLERATE_3200: actualSampleRate = 3200.0f; break;
-    default: actualSampleRate = 400.0f; break;
+    default: actualSampleRate = 800.0f; break;
   }
   
   // Update filter instance with actual sample rate
@@ -149,8 +149,8 @@ void loop() {
         float irFiltered_HR = filters.applyFilter(irFloat, heartRateFilter, heartRateFilterState);
         
         // Output all values in CSV format
-        snprintf(outputBuffer, sizeof(outputBuffer), "%.2f,%.2f", 
-                 irFiltered_BR, irFiltered_HR);
+        snprintf(outputBuffer, sizeof(outputBuffer), "%lu,%.2f,%.2f", 
+                 irValue, irFiltered_BR, irFiltered_HR);
         Serial.println(outputBuffer);
       }
     }
