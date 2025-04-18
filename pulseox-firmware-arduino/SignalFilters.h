@@ -3,26 +3,45 @@
 #define SIGNAL_FILTERS_H
 
 #include <Arduino.h>
+#include <math.h>
 
-// Filter coefficients structure
-struct FilterCoefficients {
-    float b[3];  // Numerator coefficients (b0, b1, b2)
-    float a[2];  // Denominator coefficients (a1, a2), a0 is assumed to be 1.0
-};
+// Define PI with fewer decimal points for better numerical stability
+#define FILTER_PI 3.14159f
 
+// Simple biquad filter class
 class SignalFilters {
 public:
+    // Simple biquad filter state
+    struct FilterState {
+        float x1 = 0.0f;  // Previous input
+        float x2 = 0.0f;  // Input from 2 samples ago
+        float y1 = 0.0f;  // Previous output
+        float y2 = 0.0f;  // Output from 2 samples ago
+    };
+    
+    // Biquad filter coefficients
+    struct BiquadCoefficients {
+        float b0 = 1.0f;
+        float b1 = 0.0f;
+        float b2 = 0.0f;
+        float a1 = 0.0f;
+        float a2 = 0.0f;
+    };
+    
     SignalFilters(float sampleRate);
     
     // Filter design methods
-    FilterCoefficients designLowPassFilter(float cutoffFreq);
-    FilterCoefficients designHighPassFilter(float cutoffFreq);
-    FilterCoefficients designBandPassFilter(float lowFreq, float highFreq);
-    FilterCoefficients designBandStopFilter(float lowFreq, float highFreq);
-    FilterCoefficients designNotchFilter(float centerFreq, float Q = 30.0);
+    BiquadCoefficients createLowPassFilter(float cutoffFreq);
+    BiquadCoefficients createHighPassFilter(float cutoffFreq);
+    BiquadCoefficients createBandPassFilter(float lowFreq, float highFreq);
+    BiquadCoefficients createBandStopFilter(float lowFreq, float highFreq);
+    BiquadCoefficients createNotchFilter(float centerFreq, float Q = 30.0f);
     
-    // Filter application (Direct Form II implementation)
-    float applyFilter(float input, const FilterCoefficients &coeffs, float *state);
+    // Apply filter to a single sample
+    float applyFilter(float input, const BiquadCoefficients &coeffs, FilterState &state);
+    
+    // Simple DC removal filter
+    float applyDCRemoval(float input, float &prevInput, float &prevOutput, float alpha = 0.995f);
     
     // Get sample rate
     float getSampleRate() const { return _sampleRate; }

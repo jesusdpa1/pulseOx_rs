@@ -1,128 +1,278 @@
 // SignalFilters.cpp
 #include "SignalFilters.h"
-#include <math.h>
 
 SignalFilters::SignalFilters(float sampleRate) : _sampleRate(sampleRate) {
 }
 
-FilterCoefficients SignalFilters::designLowPassFilter(float cutoffFreq) {
-    FilterCoefficients coeffs;
+SignalFilters::BiquadCoefficients SignalFilters::createLowPassFilter(float cutoffFreq) {
+    BiquadCoefficients coeffs;
+    
+    // Ensure cutoff frequency is within valid range
+    if (cutoffFreq <= 0.0f) cutoffFreq = 0.1f;
+    if (cutoffFreq >= _sampleRate/2.0f) cutoffFreq = _sampleRate/2.0f * 0.99f;
     
     // Normalize frequency
     float omega = 2.0f * PI * cutoffFreq / _sampleRate;
-    float alpha = sin(omega) / (2.0f * 0.7071f); // Q factor = 0.7071 for Butterworth
+    float sn = sin(omega);
+    float cs = cos(omega);
+    float alpha = sn / (2.0f * 0.7071f); // Q factor = 0.7071 for Butterworth
+    
+    // Prevent division by zero
+    if (alpha < 0.0001f) alpha = 0.0001f;
     
     // Calculate coefficients (bilinear transform)
-    float cosw = cos(omega);
     float a0 = 1.0f + alpha;
     
+    // Prevent division by zero
+    if (fabs(a0) < 0.0001f) a0 = 0.0001f;
+    
     // Normalized coefficients
-    coeffs.b[0] = (1.0f - cosw) / (2.0f * a0);
-    coeffs.b[1] = (1.0f - cosw) / a0;
-    coeffs.b[2] = (1.0f - cosw) / (2.0f * a0);
-    coeffs.a[0] = -2.0f * cosw / a0;
-    coeffs.a[1] = (1.0f - alpha) / a0;
+    coeffs.b0 = (1.0f - cs) / (2.0f * a0);
+    coeffs.b1 = (1.0f - cs) / a0;
+    coeffs.b2 = (1.0f - cs) / (2.0f * a0);
+    coeffs.a1 = (-2.0f * cs) / a0;
+    coeffs.a2 = (1.0f - alpha) / a0;
+    
+    // Ensure coefficients aren't NaN
+    if (isnan(coeffs.b0)) coeffs.b0 = 0.0f;
+    if (isnan(coeffs.b1)) coeffs.b1 = 0.0f;
+    if (isnan(coeffs.b2)) coeffs.b2 = 0.0f;
+    if (isnan(coeffs.a1)) coeffs.a1 = 0.0f;
+    if (isnan(coeffs.a2)) coeffs.a2 = 0.0f;
     
     return coeffs;
 }
 
-FilterCoefficients SignalFilters::designHighPassFilter(float cutoffFreq) {
-    FilterCoefficients coeffs;
+SignalFilters::BiquadCoefficients SignalFilters::createHighPassFilter(float cutoffFreq) {
+    BiquadCoefficients coeffs;
+    
+    // Ensure cutoff frequency is within valid range
+    if (cutoffFreq <= 0.0f) cutoffFreq = 0.1f;
+    if (cutoffFreq >= _sampleRate/2.0f) cutoffFreq = _sampleRate/2.0f * 0.99f;
     
     // Normalize frequency
     float omega = 2.0f * PI * cutoffFreq / _sampleRate;
-    float alpha = sin(omega) / (2.0f * 0.7071f); // Q factor = 0.7071 for Butterworth
+    float sn = sin(omega);
+    float cs = cos(omega);
+    float alpha = sn / (2.0f * 0.7071f); // Q factor = 0.7071 for Butterworth
+    
+    // Prevent division by zero
+    if (alpha < 0.0001f) alpha = 0.0001f;
     
     // Calculate coefficients (bilinear transform)
-    float cosw = cos(omega);
     float a0 = 1.0f + alpha;
     
+    // Prevent division by zero
+    if (fabs(a0) < 0.0001f) a0 = 0.0001f;
+    
     // Normalized coefficients
-    coeffs.b[0] = (1.0f + cosw) / (2.0f * a0);
-    coeffs.b[1] = -(1.0f + cosw) / a0;
-    coeffs.b[2] = (1.0f + cosw) / (2.0f * a0);
-    coeffs.a[0] = -2.0f * cosw / a0;
-    coeffs.a[1] = (1.0f - alpha) / a0;
+    coeffs.b0 = (1.0f + cs) / (2.0f * a0);
+    coeffs.b1 = -(1.0f + cs) / a0;
+    coeffs.b2 = (1.0f + cs) / (2.0f * a0);
+    coeffs.a1 = (-2.0f * cs) / a0;
+    coeffs.a2 = (1.0f - alpha) / a0;
+    
+    // Ensure coefficients aren't NaN
+    if (isnan(coeffs.b0)) coeffs.b0 = 0.0f;
+    if (isnan(coeffs.b1)) coeffs.b1 = 0.0f;
+    if (isnan(coeffs.b2)) coeffs.b2 = 0.0f;
+    if (isnan(coeffs.a1)) coeffs.a1 = 0.0f;
+    if (isnan(coeffs.a2)) coeffs.a2 = 0.0f;
     
     return coeffs;
 }
 
-FilterCoefficients SignalFilters::designBandPassFilter(float lowFreq, float highFreq) {
-    FilterCoefficients coeffs;
+SignalFilters::BiquadCoefficients SignalFilters::createBandPassFilter(float lowFreq, float highFreq) {
+    BiquadCoefficients coeffs;
+    
+    // Ensure frequencies are valid
+    if (lowFreq <= 0.0f) lowFreq = 0.1f;
+    if (highFreq >= _sampleRate/2.0f) highFreq = _sampleRate/2.0f * 0.99f;
+    if (lowFreq >= highFreq) {
+        float temp = lowFreq;
+        lowFreq = highFreq * 0.5f;
+        highFreq = temp * 2.0f;
+    }
     
     // Calculate center frequency and bandwidth
     float centerFreq = sqrt(lowFreq * highFreq);
     float bandwidth = highFreq - lowFreq;
     
-    // Normalized frequency (0 to π)
+    // Normalize frequency
     float omega = 2.0f * PI * centerFreq / _sampleRate;
-    float alpha = sin(omega) * sinh(log(2.0f) / 2.0f * bandwidth / centerFreq * omega / sin(omega));
+    float sn = sin(omega);
+    float cs = cos(omega);
     
-    float cosw = cos(omega);
+    // Calculate alpha (for bandwidth)
+    float alpha = sn * sinh(log(2.0f) / 2.0f * bandwidth / centerFreq * omega / sn);
+    
+    // Prevent division by zero or NaN
+    if (isnan(alpha) || alpha < 0.0001f) alpha = 0.0001f;
+    
+    // Calculate coefficients
     float a0 = 1.0f + alpha;
     
+    // Prevent division by zero
+    if (fabs(a0) < 0.0001f) a0 = 0.0001f;
+    
     // Normalized coefficients
-    coeffs.b[0] = alpha / a0;
-    coeffs.b[1] = 0.0f;
-    coeffs.b[2] = -alpha / a0;
-    coeffs.a[0] = -2.0f * cosw / a0;
-    coeffs.a[1] = (1.0f - alpha) / a0;
+    coeffs.b0 = alpha / a0;
+    coeffs.b1 = 0.0f;
+    coeffs.b2 = -alpha / a0;
+    coeffs.a1 = -2.0f * cs / a0;
+    coeffs.a2 = (1.0f - alpha) / a0;
+    
+    // Ensure coefficients aren't NaN
+    if (isnan(coeffs.b0)) coeffs.b0 = 0.0f;
+    if (isnan(coeffs.b1)) coeffs.b1 = 0.0f;
+    if (isnan(coeffs.b2)) coeffs.b2 = 0.0f;
+    if (isnan(coeffs.a1)) coeffs.a1 = 0.0f;
+    if (isnan(coeffs.a2)) coeffs.a2 = 0.0f;
     
     return coeffs;
 }
 
-FilterCoefficients SignalFilters::designBandStopFilter(float lowFreq, float highFreq) {
-    FilterCoefficients coeffs;
+SignalFilters::BiquadCoefficients SignalFilters::createBandStopFilter(float lowFreq, float highFreq) {
+    BiquadCoefficients coeffs;
+    
+    // Ensure frequencies are valid
+    if (lowFreq <= 0.0f) lowFreq = 0.1f;
+    if (highFreq >= _sampleRate/2.0f) highFreq = _sampleRate/2.0f * 0.99f;
+    if (lowFreq >= highFreq) {
+        float temp = lowFreq;
+        lowFreq = highFreq * 0.5f;
+        highFreq = temp * 2.0f;
+    }
     
     // Calculate center frequency and bandwidth
     float centerFreq = sqrt(lowFreq * highFreq);
     float bandwidth = highFreq - lowFreq;
     
-    // Normalized frequency (0 to π)
+    // Normalize frequency
     float omega = 2.0f * PI * centerFreq / _sampleRate;
-    float alpha = sin(omega) * sinh(log(2.0f) / 2.0f * bandwidth / centerFreq * omega / sin(omega));
+    float sn = sin(omega);
+    float cs = cos(omega);
     
-    float cosw = cos(omega);
+    // Calculate alpha (for bandwidth)
+    float alpha = sn * sinh(log(2.0f) / 2.0f * bandwidth / centerFreq * omega / sn);
+    
+    // Prevent division by zero or NaN
+    if (isnan(alpha) || alpha < 0.0001f) alpha = 0.0001f;
+    
+    // Calculate coefficients
     float a0 = 1.0f + alpha;
     
+    // Prevent division by zero
+    if (fabs(a0) < 0.0001f) a0 = 0.0001f;
+    
     // Normalized coefficients
-    coeffs.b[0] = 1.0f / a0;
-    coeffs.b[1] = -2.0f * cosw / a0;
-    coeffs.b[2] = 1.0f / a0;
-    coeffs.a[0] = -2.0f * cosw / a0;
-    coeffs.a[1] = (1.0f - alpha) / a0;
+    coeffs.b0 = 1.0f / a0;
+    coeffs.b1 = -2.0f * cs / a0;
+    coeffs.b2 = 1.0f / a0;
+    coeffs.a1 = -2.0f * cs / a0;
+    coeffs.a2 = (1.0f - alpha) / a0;
+    
+    // Ensure coefficients aren't NaN
+    if (isnan(coeffs.b0)) coeffs.b0 = 0.0f;
+    if (isnan(coeffs.b1)) coeffs.b1 = 0.0f;
+    if (isnan(coeffs.b2)) coeffs.b2 = 0.0f;
+    if (isnan(coeffs.a1)) coeffs.a1 = 0.0f;
+    if (isnan(coeffs.a2)) coeffs.a2 = 0.0f;
     
     return coeffs;
 }
 
-FilterCoefficients SignalFilters::designNotchFilter(float centerFreq, float Q) {
-    FilterCoefficients coeffs;
+SignalFilters::BiquadCoefficients SignalFilters::createNotchFilter(float centerFreq, float Q) {
+    BiquadCoefficients coeffs;
     
-    // Normalized frequency (0 to π)
+    // Ensure parameters are valid
+    if (centerFreq <= 0.0f || centerFreq >= _sampleRate/2.0f) {
+        centerFreq = _sampleRate/4.0f; // Default to 1/4 of sample rate
+    }
+    
+    if (Q <= 0.1f) Q = 0.1f;
+    if (Q > 100.0f) Q = 100.0f;
+    
+    // Normalize frequency
     float omega = 2.0f * PI * centerFreq / _sampleRate;
-    float alpha = sin(omega) / (2.0f * Q);
+    float sn = sin(omega);
+    float cs = cos(omega);
+    float alpha = sn / (2.0f * Q);
     
-    float cosw = cos(omega);
+    // Prevent division by zero
+    if (alpha < 0.0001f) alpha = 0.0001f;
+    
+    // Calculate coefficients
     float a0 = 1.0f + alpha;
     
+    // Prevent division by zero
+    if (fabs(a0) < 0.0001f) a0 = 0.0001f;
+    
     // Normalized coefficients
-    coeffs.b[0] = 1.0f / a0;
-    coeffs.b[1] = -2.0f * cosw / a0;
-    coeffs.b[2] = 1.0f / a0;
-    coeffs.a[0] = -2.0f * cosw / a0;
-    coeffs.a[1] = (1.0f - alpha) / a0;
+    coeffs.b0 = 1.0f / a0;
+    coeffs.b1 = -2.0f * cs / a0;
+    coeffs.b2 = 1.0f / a0;
+    coeffs.a1 = -2.0f * cs / a0;
+    coeffs.a2 = (1.0f - alpha) / a0;
+    
+    // Ensure coefficients aren't NaN
+    if (isnan(coeffs.b0)) coeffs.b0 = 0.0f;
+    if (isnan(coeffs.b1)) coeffs.b1 = 0.0f;
+    if (isnan(coeffs.b2)) coeffs.b2 = 0.0f;
+    if (isnan(coeffs.a1)) coeffs.a1 = 0.0f;
+    if (isnan(coeffs.a2)) coeffs.a2 = 0.0f;
     
     return coeffs;
 }
 
-float SignalFilters::applyFilter(const float input, FilterCoefficients &coeffs, float *state) {
-    // Direct Form II implementation
-    float w = input - coeffs.a[0] * state[0] - coeffs.a[1] * state[1];
-    float output = coeffs.b[0] * w + coeffs.b[1] * state[0] + coeffs.b[2] * state[1];
+float SignalFilters::applyFilter(float input, const BiquadCoefficients &coeffs, FilterState &state) {
+    // Direct Form I implementation (more stable for low frequencies)
+    float output = coeffs.b0 * input + coeffs.b1 * state.x1 + coeffs.b2 * state.x2 
+                 - coeffs.a1 * state.y1 - coeffs.a2 * state.y2;
     
     // Update state
-    state[1] = state[0];
-    state[0] = w;
+    state.x2 = state.x1;
+    state.x1 = input;
+    state.y2 = state.y1;
+    state.y1 = output;
+    
+    // Detect and prevent NaN propagation
+    if (isnan(output)) {
+        output = 0.0f;
+        // Reset filter state when NaN occurs
+        state.x1 = 0.0f;
+        state.x2 = 0.0f;
+        state.y1 = 0.0f;
+        state.y2 = 0.0f;
+    }
+    
+    // Apply limiter to prevent unstable growth
+    const float MAX_VALUE = 1000000.0f;
+    if (output > MAX_VALUE) output = MAX_VALUE;
+    if (output < -MAX_VALUE) output = -MAX_VALUE;
+    
+    return output;
+}
+
+float SignalFilters::applyDCRemoval(float input, float &prevInput, float &prevOutput, float alpha) {
+    // High-pass filter for DC removal
+    float output = alpha * prevOutput + alpha * (input - prevInput);
+    
+    // Update state
+    prevInput = input;
+    prevOutput = output;
+    
+    // Prevent NaN
+    if (isnan(output)) {
+        output = 0.0f;
+        prevInput = 0.0f;
+        prevOutput = 0.0f;
+    }
+    
+    // Apply limiter to prevent unstable growth
+    const float MAX_VALUE = 1000000.0f;
+    if (output > MAX_VALUE) output = MAX_VALUE;
+    if (output < -MAX_VALUE) output = -MAX_VALUE;
     
     return output;
 }
