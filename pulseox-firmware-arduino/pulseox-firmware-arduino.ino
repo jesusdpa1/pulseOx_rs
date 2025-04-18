@@ -4,7 +4,7 @@
 #include "SignalFilters.h"
 #include "core.h"
 #include "Communication.h"
-
+// In your main Arduino file
 // Define pins
 #define MAX30102_INT_PIN 2  // Digital pin 2 for interrupt (not connected for now)
 
